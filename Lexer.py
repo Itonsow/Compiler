@@ -154,7 +154,7 @@ class Lexer:
                     caractere = self.source[self.index]
                     if caractere == "\n":
                         break
-                    if ord(caractere) < 127:
+                    if ord(caractere) < 127: #????
                         raise LexerError("caractere invalido", self.line, self.column)
                     self.avanco()
                 continue
@@ -207,6 +207,47 @@ class Lexer:
 class Lexer:
     """Converte texto-fonte MicroC em uma sequência de tokens."""
 
+        #as palavras reservadas vao consultadas nessa tabela.
+    RESERVADAS = {
+        "int": TokenKind.KW_INT,
+        "bool": TokenKind.KW_BOOL,
+        "void": TokenKind.KW_VOID,
+        "true": TokenKind.KW_TRUE,
+        "false": TokenKind.KW_FALSE,
+        "if": TokenKind.KW_IF,
+        "else": TokenKind.KW_ELSE,
+        "while": TokenKind.KW_WHILE,
+        "return": TokenKind.KW_RETURN,
+        "print": TokenKind.KW_PRINT,
+    }
+
+    #os operadores e simbolos sao consultados nessa tabela.
+    SIMBOLOS = {
+        "<=": TokenKind.LESS_EQUAL,
+        ">=": TokenKind.GREATER_EQUAL,
+        "==": TokenKind.EQUAL_EQUAL,
+        "!=": TokenKind.NOT_EQUAL,
+        "&&": TokenKind.LOGICAL_AND,
+        "||": TokenKind.LOGICAL_OR,
+        "+": TokenKind.PLUS,
+        "-": TokenKind.MINUS,
+        "*": TokenKind.STAR,
+        "/": TokenKind.SLASH,
+        "%": TokenKind.PERCENT,
+        "<": TokenKind.LESS,
+        ">": TokenKind.GREATER,
+        "!": TokenKind.LOGICAL_NOT,
+        "=": TokenKind.ASSIGN,
+        "(": TokenKind.LEFT_PAREN,
+        ")": TokenKind.RIGHT_PAREN,
+        "{": TokenKind.LEFT_BRACE,
+        "}": TokenKind.RIGHT_BRACE,
+        ",": TokenKind.COMMA,
+        ";": TokenKind.SEMICOLON,
+    }
+
+
+
     def __init__(self, source: str):
         self.source = source
         # TODO: inicialize aqui o estado exigido por sua estratégia.
@@ -241,30 +282,29 @@ class Lexer:
             
     def id_letra(self, character: str) -> bool:
         if character == None:
-            return None
-        return "a" <= character <= "z" or "A" <= character <= "Z" or "_"
+            return False
+            return ( "a" <= character <= "z"or "A" <= character <= "Z" or character == "_" )
 
-    def identificador_reservada(self):
-        inicio = self.index
-        linha_inicio = self.line
-        coluna_inicio = self.column
+    def identificador_reservada(self):  #aqui n verifica se a palavra começa com letra
+        inicio = self.index #salva o index(posicao) de quando entrou na funcao.
+        # linha_inicio = self.line
+        # coluna_inicio = self.column
         
         while True:
-            character = self.caracter_atual()
+            character = self.caracter_atual() #enquanto for verdadeiro vai avancando o self.index
 
             if character is None:
                 break
 
-            if self.id_letra(character) or ("0" <= character <= "9"):
+            if self.id_letra(character) or ("0" <= character <= "9"):  #se n for numero, letra ou _, da false e quebra
                 self.avanco()
             else:
                 break
 
+        lexeme = self.source[inicio:self.index] #o index avança até o final da palavra, ent pegamos o index de quando entrou na funcao(inicio) até o index atual
+        #e a palavra pe colocada no lexeme
 
-
-        if self.caracter_atual() == 
-            guarda a posiocao atual 
-            avanca para o proximo caracter
-                ve c a palavra acaba com espaco, ou com algm operador
-                    se acabar, salva  a posicao final da palavra
-                        armazena no lexeme
+        if lexeme in self.RESERVADAS: #ve c tem na tabela reservadas
+            return self.RESERVADAS[lexeme] #se tiver, retorna o valor do lexeme
+        else:
+            return TokenKind.IDENTIFIER # se n tiver, é um identifcador e retorna tokem de identificador
