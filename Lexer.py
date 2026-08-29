@@ -260,23 +260,64 @@ class Lexer:
             else:
                 break
 
-        lexeme = self.source[inicio:self.index]
+        lexeme = self.source[inicio:self.index] #pegar o numero inteiro
 
-        value = int(lexeme)
+        value = int(lexeme) #colocar variavel que vai pro token
 
-        if value > 2**63-1 :
-            raise LexerError(
+        if value > 2**63-1 : #colocar um limite, se estiver fora da erro
+            raise LexerError( #mensagem q o erro vai da
                 "Inteiro esta fora do valor permitido",
                 linha_inicio,
                 coluna_inicio
             )
             
-        return Token(TokenKind.INT_LITERAL, lexeme, value, linha_inicio, coluna_inicio)
+        return Token(TokenKind.INT_LITERAL, lexeme, value, linha_inicio, coluna_inicio) #retorna o tokem inteiro
 
 
-    # def string(self) :
-    #     inicio = self.index #salva o index(posicao) de quando entrou na funcao.
-    #     linha_inicio = self.line
-    #     coluna_inicio = self.column
+    def string(self) :
+        inicio = self.index #salva o index(posicao) de quando entrou na funcao.
+        linha_inicio = self.line
+        coluna_inicio = self.column
+
+        while True:
+            character = self.caracter_atual() #enquanto for verdadeiro vai avancando o self.index
+
+            if character is None:
+                raise LexerError(
+                    "erro na string",
+                    linha_inicio,
+                    coluna_inicio
+                )
+
+            elif self.id_numero(character) or self.id_letra(character):  #se n for numero, letra ou _, da false e quebra
+                self.avanco()
+
+            # elif character == '\':
+            #     prox = self.ver_proximo_caracter
+            #     if prox == 'n':
+            #         self.avanco
+
+
+            elif character == '\n' :
+                raise LexerError( #mensagem q o erro vai da
+                    "Não é permitido isso dentro de uma atring",
+                    linha_inicio,
+                    coluna_inicio
+                )
+            elif character == '"':
+                break
+            else:
+                raise LexerError( #mensagem q o erro vai da
+                    "String n terminada",
+                    linha_inicio,
+                    coluna_inicio
+                )
+
+        lexeme = self.source[inicio:self.index] 
+
+        kind = TokenKind.STRING_LITERAL
+
+        Token(kind, lexeme, lexeme, linha_inicio, coluna_inicio) 
+
 
         
