@@ -241,7 +241,7 @@ class Lexer:
 
 
 
-    def id_pular(self) -> None:
+    def id_pular(self) -> None: # pular comentarios e espacos em branco, consome o // e vai ate o final da linha, consome o /* e vai ate o final do comentario
         while self.index < len(self.source):
             caractere = self.source[self.index]
 
@@ -261,7 +261,7 @@ class Lexer:
 
 
 
-    def pular_comentario_linha(self) -> None:
+    def pular_comentario_linha(self) -> None: # pular comentario de linha, consome o // e vai ate o final da linha
         # Consome //
         self.avanco()
         self.avanco()
@@ -272,14 +272,14 @@ class Lexer:
             if caractere == "\n":
                 return
 
-            if ord(caractere) > 127:
+            if ord(caractere) > 127: # Caractere invalido
                 raise LexerError("Caractere invalido", self.line, self.column)
 
             self.avanco()
 
 
 
-    def pular_comentario_bloco(self) -> None:
+    def pular_comentario_bloco(self) -> None: # pular comentario de bloco, consome o /* e vai ate o final do comentario
         inicio_linha = self.line
         inicio_coluna = self.column
 
@@ -290,7 +290,7 @@ class Lexer:
         while self.index < len(self.source):
             caractere = self.source[self.index]
 
-            if ord(caractere) > 127:
+            if ord(caractere) > 127: # Caractere invalido
                 raise LexerError("Caractere invalido", self.line, self.column)
 
             if (caractere == "*" and self.index + 1 < len(self.source) and self.source[self.index + 1] == "/"):
