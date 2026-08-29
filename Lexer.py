@@ -148,12 +148,13 @@ class Lexer:
     def id_letra(self, character: str) -> bool:
         if character == None:
             return False
+        else :
             return ( "a" <= character <= "z" or "A" <= character <= "Z" or character == "_" )
 
     def identificador_reservada(self):  #aqui n verifica se a palavra começa com letra
         inicio = self.index #salva o index(posicao) de quando entrou na funcao.
-        # linha_inicio = self.line
-        # coluna_inicio = self.column
+        linha_inicio = self.line
+        coluna_inicio = self.column
         
         while True:
             character = self.caracter_atual() #enquanto for verdadeiro vai avancando o self.index
@@ -168,10 +169,19 @@ class Lexer:
         lexeme = self.source[inicio:self.index] #o index avança até o final da palavra, ent pegamos o index de quando entrou na funcao(inicio) até o index atual
         #e a palavra pe colocada no lexeme
 
+        if lexeme == 'true':
+            value = True
+        elif lexeme == 'false':
+            value = False
+        else :
+            value = None
+
         if lexeme in self.RESERVADAS: #ve c tem na tabela reservadas
-            return self.RESERVADAS[lexeme] #se tiver, retorna o valor do lexeme
+            kind =  self.RESERVADAS[lexeme] #se tiver, retorna o valor do lexeme
         else:
-            return TokenKind.IDENTIFIER # se n tiver, é um identifcador e retorna tokem de identificador
+            kind =  TokenKind.IDENTIFIER # se n tiver, é um identifcador e retorna tokem de identificador
+
+        Token(kind, lexeme, value, linha_inicio, coluna_inicio) 
 
     
     def id_numero(self, character: str) -> bool:
@@ -233,3 +243,40 @@ class Lexer:
     #     while self.caracter_atual() in (" ","\n","\r","\t"):
     #         self.avanco()
             
+    def inteiros(self) :
+        inicio = self.index #salva o index(posicao) de quando entrou na funcao.
+        linha_inicio = self.line
+        coluna_inicio = self.column
+
+        while True:
+            number = self.caracter_atual() #enquanto for verdadeiro vai avancando o self.index
+
+            if number is None:
+                break
+
+            if self.id_numero(number):  #se n for numero, letra ou _, da false e quebra
+                self.avanco()
+
+            else:
+                break
+
+        lexeme = self.source[inicio:self.index]
+
+        value = int(lexeme)
+
+        if value > 2**63-1 :
+            raise LexerError(
+                "Inteiro esta fora do valor permitido",
+                linha_inicio,
+                coluna_inicio
+            )
+            
+        return Token(TokenKind.INT_LITERAL, lexeme, value, linha_inicio, coluna_inicio)
+
+
+    # def string(self) :
+    #     inicio = self.index #salva o index(posicao) de quando entrou na funcao.
+    #     linha_inicio = self.line
+    #     coluna_inicio = self.column
+
+        
