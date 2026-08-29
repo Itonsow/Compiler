@@ -181,19 +181,21 @@ class Lexer:
         lexeme = self.source[inicio:self.index] #o index avança até o final da palavra, ent pegamos o index de quando entrou na funcao(inicio) até o index atual
         #e a palavra pe colocada no lexeme
 
-        if lexeme == 'true':
-            value = True
-        elif lexeme == 'false':
-            value = False
-        else :
-            value = None
-
         if lexeme in self.RESERVADAS: #ve c tem na tabela reservadas
             kind =  self.RESERVADAS[lexeme] #se tiver, retorna o valor do lexeme
         else:
             kind =  TokenKind.IDENTIFIER # se n tiver, é um identifcador e retorna tokem de identificador
 
-        Token(kind, lexeme, value, linha_inicio, coluna_inicio) 
+        if lexeme == "true":
+            value = True
+        elif lexeme == "false":
+            value = False
+        elif kind == TokenKind.IDENTIFIER:
+            value = lexeme
+        else:
+            value = None
+
+        return Token(kind, lexeme, value, linha_inicio, coluna_inicio)
 
 
     
@@ -321,7 +323,7 @@ class Lexer:
         lexeme = self.source[inicio:self.index] #pegar o numero inteiro
     
         value = int(lexeme) #colocar variavel que vai pro token
-    
+
         if value > 2**63-1 : #colocar um limite, se estiver fora da erro
             raise LexerError("Inteiro esta fora do valor permitido", linha_inicio, coluna_inicio) #mensagem q o erro vai da
                 
@@ -343,7 +345,7 @@ class Lexer:
             elif self.id_numero(character) or self.id_letra(character):  #se n for numero, letra ou _, da false e quebra
                 self.avanco()
     
-            # elif character == '\':
+            # elif character == '\\':
             #     prox = self.ver_proximo_caracter
             #     if prox == 'n':
             #         self.avanco
