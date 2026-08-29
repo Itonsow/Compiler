@@ -117,12 +117,16 @@ class Lexer:
         ";": TokenKind.SEMICOLON,
     }
 
+
+
     def __init__(self, source: str):
         self.source = source
         # TODO: inicialize aqui o estado exigido por sua estratégia.
         self.index = 0
         self.line = 1
         self.column = 1
+
+
 
     def avanco(self): #avança para pegar o estado 
         if self.index < len(self.source):
@@ -133,11 +137,15 @@ class Lexer:
                 self.column += 1
             self.index += 1
 
+
+
     def caracter_atual(self): #pega o atual e retorna o caracter
         if self.index < len(self.source):
             return self.source[self.index]
         else:
             return None
+
+
 
     def ver_proximo_caracter(self): #ve o proximo, vai ajudar nos operadores log
         if self.index + 1 < len(self.source):
@@ -145,11 +153,15 @@ class Lexer:
         else:
             return None
 
+
+
     def id_letra(self, character: str) -> bool:
         if character == None:
             return False
         else :
             return ( "a" <= character <= "z" or "A" <= character <= "Z" or character == "_" )
+
+
 
     def identificador_reservada(self):  #aqui n verifica se a palavra começa com letra
         inicio = self.index #salva o index(posicao) de quando entrou na funcao.
@@ -183,47 +195,173 @@ class Lexer:
 
         Token(kind, lexeme, value, linha_inicio, coluna_inicio) 
 
+
     
     def id_numero(self, character: str) -> bool:
         return "0" <= character <= "9"
+
+
     
+    # def id_pular(self) -> None:
+    #     while self.index < len(self.source):
+    #         caractere = self.source[self.index]
+    #         if (caractere == " " or caractere == "\n" or caractere == "\r" or caractere == "\t"):
+    #             self.avanco()
+    #             continue
+    #         if (caractere == "/" and self.index + 1 < len(self.source) and self.source[self.index + 1] == "/"):
+    #             self.avanco()
+    #             self.avanco()
+    #             while self.index < len(self.source):
+    #                 caractere = self.source[self.index]
+    #                 if caractere == "\n":
+    #                     break
+    #                 if ord(caractere) > 127: # Caractere eh valido
+    #                     raise LexerError("caractere invalido", self.line, self.column)
+    #                 self.avanco()
+    #             continue
+    #         if (caractere == "/" and self.index + 1 < len(self.source) and self.source[self.index + 1] == "*"):
+    #             inicio_linha = self.line #GUARDAR POSICAO INICIAL PARA FECHAR DPS
+    #             inicio_coluna = self.column
+    #             fechou = False
+    #             self.avanco()
+    #             self.avanco()
+    #             while self.index < len(self.source):
+    #                 if ord(caractere) > 127:
+    #                     raise LexerError("caractere invalido", self.line, self.column)
+    #                 if (self.source[self.index] == "*" and self.index + 1 < len(self.source) and self.source[self.index + 1] == "/"): #FECHOU O COMENTARIO
+    #                     self.avanco()
+    #                     self.avanco()
+    #                     fechou = True
+    #                     break
+    #                 self.avanco()
+    #             if not fechou:
+    #                 raise LexerError("comentario nao fechado", inicio_linha, inicio_coluna)
+    #             continue
+    #         return
+
+
+
     def id_pular(self) -> None:
         while self.index < len(self.source):
             caractere = self.source[self.index]
+
             if (caractere == " " or caractere == "\n" or caractere == "\r" or caractere == "\t"):
                 self.avanco()
                 continue
-            if (caractere == "/" and self.index + 1 < len(self.source) and self.source[self.index + 1] == "/"):
-                self.avanco()
-                self.avanco()
 
-                while self.index < len(self.source):
-                    caractere = self.source[self.index]
-                    if caractere == "\n":
-                        break
-                    if ord(caractere) > 127: # Caractere eh valido
-                        raise LexerError("caractere invalido", self.line, self.column)
-                    self.avanco()
+            if (caractere == "/" and self.index + 1 < len(self.source) and self.source[self.index + 1] == "/"):
+                self.pular_comentario_linha()
                 continue
+
             if (caractere == "/" and self.index + 1 < len(self.source) and self.source[self.index + 1] == "*"):
-                inicio_linha = self.line #GUARDAR POSICAO INICIAL PARA FECHAR DPS
-                inicio_coluna = self.column
-                fechou = False
-                self.avanco()
-                self.avanco()
-                while self.index < len(self.source):
-                    if ord(caractere) > 127:
-                        raise LexerError("caractere invalido", self.line, self.column)
-                    if (self.source[self.index] == "*" and self.index + 1 < len(self.source) and self.source[self.index + 1] == "/"): #FECHOU O COMENTARIO
-                        self.avanco()
-                        self.avanco()
-                        fechou = True
-                        break
-                    self.avanco()
-                if not fechou:
-                    raise LexerError("comentario nao fechado", inicio_linha, inicio_coluna)
+                self.pular_comentario_bloco()
                 continue
+
             return
+
+
+
+    def pular_comentario_linha(self) -> None:
+        # Consome //
+        self.avanco()
+        self.avanco()
+
+        while self.index < len(self.source):
+            caractere = self.source[self.index]
+
+            if caractere == "\n":
+                return
+
+            if ord(caractere) > 127:
+                raise LexerError("Caractere invalido", self.line, self.column)
+
+            self.avanco()
+
+
+
+    def pular_comentario_bloco(self) -> None:
+        inicio_linha = self.line
+        inicio_coluna = self.column
+
+        # Consome /*
+        self.avanco()
+        self.avanco()
+
+        while self.index < len(self.source):
+            caractere = self.source[self.index]
+
+            if ord(caractere) > 127:
+                raise LexerError("Caractere invalido", self.line, self.column)
+
+            if (caractere == "*" and self.index + 1 < len(self.source) and self.source[self.index + 1] == "/"):
+                self.avanco()
+                self.avanco()
+                return
+
+            self.avanco()
+
+        raise LexerError("Comentario nao fechado", inicio_linha, inicio_coluna)
+
+
+
+    def inteiros(self) :
+        inicio = self.index #salva o index(posicao) de quando entrou na funcao.
+        linha_inicio = self.line
+        coluna_inicio = self.column
+    
+        while True:
+            number = self.caracter_atual() #enquanto for verdadeiro vai avancando o self.index
+            if number is None:
+                break
+            if self.id_numero(number):  #se n for numero, letra ou _, da false e quebra
+                self.avanco()
+            else:
+                break
+    
+        lexeme = self.source[inicio:self.index] #pegar o numero inteiro
+    
+        value = int(lexeme) #colocar variavel que vai pro token
+    
+        if value > 2**63-1 : #colocar um limite, se estiver fora da erro
+            raise LexerError("Inteiro esta fora do valor permitido", linha_inicio, coluna_inicio) #mensagem q o erro vai da
+                
+        return Token(TokenKind.INT_LITERAL, lexeme, value, linha_inicio, coluna_inicio) #retorna o tokem inteiro
+
+
+
+    def string(self) :
+        inicio = self.index #salva o index(posicao) de quando entrou na funcao.
+        linha_inicio = self.line
+        coluna_inicio = self.column
+    
+        while True:
+            character = self.caracter_atual() #enquanto for verdadeiro vai avancando o self.index
+    
+            if character is None:
+                raise LexerError("Erro na String", linha_inicio, coluna_inicio)
+    
+            elif self.id_numero(character) or self.id_letra(character):  #se n for numero, letra ou _, da false e quebra
+                self.avanco()
+    
+            # elif character == '\':
+            #     prox = self.ver_proximo_caracter
+            #     if prox == 'n':
+            #         self.avanco
+    
+            elif character == '\n' :
+                raise LexerError("Nao e permitido isso dentro de uma string", linha_inicio, coluna_inicio)
+            elif character == '"':
+                break
+            else:
+                raise LexerError("String nao terminada", linha_inicio, coluna_inicio) #mensagem q o erro vai da
+            
+            lexeme = self.source[inicio:self.index] 
+    
+            kind = TokenKind.STRING_LITERAL
+    
+            Token(kind, lexeme, lexeme, linha_inicio, coluna_inicio) 
+
+
 
     def tokens(self) -> Iterator[Token]:
         temporario = []
@@ -238,86 +376,3 @@ class Lexer:
 
     def scan(self) -> list[Token]:
         return list(self.tokens())
-    
-    # def espacos(self): #pula espaco até um caracter
-    #     while self.caracter_atual() in (" ","\n","\r","\t"):
-    #         self.avanco()
-            
-    def inteiros(self) :
-        inicio = self.index #salva o index(posicao) de quando entrou na funcao.
-        linha_inicio = self.line
-        coluna_inicio = self.column
-
-        while True:
-            number = self.caracter_atual() #enquanto for verdadeiro vai avancando o self.index
-
-            if number is None:
-                break
-
-            if self.id_numero(number):  #se n for numero, letra ou _, da false e quebra
-                self.avanco()
-
-            else:
-                break
-
-        lexeme = self.source[inicio:self.index] #pegar o numero inteiro
-
-        value = int(lexeme) #colocar variavel que vai pro token
-
-        if value > 2**63-1 : #colocar um limite, se estiver fora da erro
-            raise LexerError( #mensagem q o erro vai da
-                "Inteiro esta fora do valor permitido",
-                linha_inicio,
-                coluna_inicio
-            )
-            
-        return Token(TokenKind.INT_LITERAL, lexeme, value, linha_inicio, coluna_inicio) #retorna o tokem inteiro
-
-
-    def string(self) :
-        inicio = self.index #salva o index(posicao) de quando entrou na funcao.
-        linha_inicio = self.line
-        coluna_inicio = self.column
-
-        while True:
-            character = self.caracter_atual() #enquanto for verdadeiro vai avancando o self.index
-
-            if character is None:
-                raise LexerError(
-                    "erro na string",
-                    linha_inicio,
-                    coluna_inicio
-                )
-
-            elif self.id_numero(character) or self.id_letra(character):  #se n for numero, letra ou _, da false e quebra
-                self.avanco()
-
-            # elif character == '\':
-            #     prox = self.ver_proximo_caracter
-            #     if prox == 'n':
-            #         self.avanco
-
-
-            elif character == '\n' :
-                raise LexerError( #mensagem q o erro vai da
-                    "Não é permitido isso dentro de uma atring",
-                    linha_inicio,
-                    coluna_inicio
-                )
-            elif character == '"':
-                break
-            else:
-                raise LexerError( #mensagem q o erro vai da
-                    "String n terminada",
-                    linha_inicio,
-                    coluna_inicio
-                )
-
-        lexeme = self.source[inicio:self.index] 
-
-        kind = TokenKind.STRING_LITERAL
-
-        Token(kind, lexeme, lexeme, linha_inicio, coluna_inicio) 
-
-
-        
