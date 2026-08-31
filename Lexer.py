@@ -335,33 +335,64 @@ class Lexer:
         inicio = self.index #salva o index(posicao) de quando entrou na funcao.
         linha_inicio = self.line
         coluna_inicio = self.column
-    
+
+        value = ""
+        self.avanco()
         while True:
             character = self.caracter_atual() #enquanto for verdadeiro vai avancando o self.index
     
+    
             if character is None:
                 raise LexerError("Erro na String", linha_inicio, coluna_inicio)
-    
-            elif self.id_numero(character) or self.id_letra(character):  #se n for numero, letra ou _, da false e quebra
+            
+                
+            elif character == '\\':
+            
+                prox = self.ver_proximo_caracter()
+                if prox == 'n':
+                    value += '\n'
+                    # self.avanco()
+                    # self.avanco()
+                elif prox == 't' :
+                    value += "\t"
+                    # self.avanco()
+                    # self.avanco()
+                elif prox == '"' :
+                    value += '"'
+                    # self.avanco()
+                    # self.avanco()
+
+                elif prox == "\\" :
+                    value += "\\"
+                    # self.avanco()
+                    # self.avanco()
+
+                else :
+                    raise LexerError("Alguma coisa de errado com escape", self.line, self.column)
+
                 self.avanco()
-    
-            # elif character == '\\':
-            #     prox = self.ver_proximo_caracter
-            #     if prox == 'n':
-            #         self.avanco
+                self.avanco()
+
+
     
             elif character == '\n' :
-                raise LexerError("Nao e permitido isso dentro de uma string", linha_inicio, coluna_inicio)
+                raise LexerError("Nao e permitido isso dentro de uma string", self.line, self.column)
             elif character == '"':
+                self.avanco()
                 break
-            else:
-                raise LexerError("String nao terminada", linha_inicio, coluna_inicio) #mensagem q o erro vai da
-            
-            lexeme = self.source[inicio:self.index] 
+            elif ord(character) > 127:
+                raise LexerError("caracter fora da tabela ASCII", self.line, self.column) #mensagem q o erro vai da
+            else :
+                value += character
+                self.avanco()
+
+
+        lexeme = self.source[inicio:self.index]
+        
+
+        kind = TokenKind.STRING_LITERAL
     
-            kind = TokenKind.STRING_LITERAL
-    
-            Token(kind, lexeme, lexeme, linha_inicio, coluna_inicio) 
+        return Token(kind, lexeme, value, linha_inicio, coluna_inicio) 
 
 
 
