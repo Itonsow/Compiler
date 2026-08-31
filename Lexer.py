@@ -184,7 +184,7 @@ class Lexer:
         if lexeme in self.RESERVADAS: #ve c tem na tabela reservadas
             kind =  self.RESERVADAS[lexeme] #se tiver, retorna o valor do lexeme
         else:
-            kind =  TokenKind.IDENTIFIER # se n tiver, é um identifcador e retorna tokem de identificador
+            kind =  TokenKind.IDENTIFIER # se n tiver, eh um identifcador e retorna tokem de identificador
 
         if lexeme == "true":
             value = True
@@ -324,8 +324,8 @@ class Lexer:
     
         value = int(lexeme) #colocar variavel que vai pro token
 
-        if value > 2**63-1 : #colocar um limite, se estiver fora da erro
-            raise LexerError("Inteiro esta fora do valor permitido", linha_inicio, coluna_inicio) #mensagem q o erro vai da
+        # if value > 2**63-1 : #colocar um limite, se estiver fora da erro
+        #     raise LexerError("Inteiro esta fora do valor permitido", linha_inicio, coluna_inicio) #mensagem q o erro vai da
                 
         return Token(TokenKind.INT_LITERAL, lexeme, value, linha_inicio, coluna_inicio) #retorna o tokem inteiro
 
@@ -365,16 +365,89 @@ class Lexer:
 
 
 
+    # def tokens(self) -> Iterator[Token]:
+    #     temporario = []
+    #     while self.index < len(self.source):
+    #         caractere = self.source[self.index]
+    #         if self.index >= len(self.source):
+    #             break
+    #         caratere = self.source[self.index]
+    #         letra = self.id_letra(caractere)
+
+    #         if letra or caractere == "_":
+
     def tokens(self) -> Iterator[Token]:
         temporario = []
+
         while self.index < len(self.source):
-            caractere = self.source[self.index]
+            # pular espaços e comentarios
+            self.id_pular()
+
+            # pode ter chegado ao fim depois de pular
             if self.index >= len(self.source):
                 break
-            caratere = self.source[self.index]
-            letra = self.id_letra(caractere)
 
-            if letra or caractere == "_":
+            caractere = self.caracter_atual()
+
+            linha_inicio = self.line
+            coluna_inicio = self.column
+
+            # caractere nao ASCII
+            if ord(caractere) > 127:
+                raise LexerError("Caractere invalido", linha_inicio, coluna_inicio)
+
+            # identificador ou palavra reservada
+            if self.id_letra(caractere):
+                token = self.identificador_reservada()
+                temporario.append(token)
+                continue
+
+            # numero inteiro
+            if self.id_numero(caractere):
+                token = self.inteiros()
+                temporario.append(token)
+                continue
+
+            # string
+            if caractere == '"':
+                token = self.string()
+                temporario.append(token)
+                continue
+
+            # operador de dois caracteres
+            dois_caracteres = caractere + (self.ver_proximo_caracter() or "")
+
+            if dois_caracteres in self.SIMBOLOS:
+                kind = self.SIMBOLOS[dois_caracteres]
+
+                self.avanco()
+                self.avanco()
+
+                token = Token(kind, dois_caracteres, None, linha_inicio, coluna_inicio)
+
+                temporario.append(token)
+                continue
+
+            # operador ou simbolo de um caractere
+            if caractere in self.SIMBOLOS:
+                kind = self.SIMBOLOS[caractere]
+
+                self.avanco()
+
+                token = Token(kind, caractere, None, linha_inicio, coluna_inicio)
+
+                temporario.append(token)
+                continue
+
+            # se nao entrou em nenhum caso, o caractere eh invalido
+            raise LexerError("Caractere invalido", linha_inicio, coluna_inicio)
+
+        # adicionar EOF no final
+        token_eof = Token(TokenKind.EOF, "", None, self.line, self.column)
+
+        temporario.append(token_eof)
+
+        return iter(temporario)
 
     def scan(self) -> list[Token]:
         return list(self.tokens())
