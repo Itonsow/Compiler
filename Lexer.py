@@ -408,7 +408,7 @@ class Lexer:
     #         if letra or caractere == "_":
 
     def tokens(self) -> Iterator[Token]:
-        temporario = []
+        tokens_encontrados = []
 
         while self.index < len(self.source):
             # pular espaços e comentarios
@@ -429,20 +429,18 @@ class Lexer:
 
             # identificador ou palavra reservada
             if self.id_letra(caractere):
-                token = self.identificador_reservada()
-                temporario.append(token)
+                tokens_encontrados.append(self.identificador_reservada())
                 continue
 
             # numero inteiro
             if self.id_numero(caractere):
-                token = self.inteiros()
-                temporario.append(token)
+                tokens_encontrados.append(self.inteiros())
                 continue
 
             # string
             if caractere == '"':
                 token = self.string()
-                temporario.append(token)
+                tokens_encontrados.append(token)
                 continue
 
             # operador de dois caracteres
@@ -456,7 +454,7 @@ class Lexer:
 
                 token = Token(kind, dois_caracteres, None, linha_inicio, coluna_inicio)
 
-                temporario.append(token)
+                tokens_encontrados.append(token)
                 continue
 
             # operador ou simbolo de um caractere
@@ -467,7 +465,7 @@ class Lexer:
 
                 token = Token(kind, caractere, None, linha_inicio, coluna_inicio)
 
-                temporario.append(token)
+                tokens_encontrados.append(token)
                 continue
 
             # se nao entrou em nenhum caso, o caractere eh invalido
@@ -476,9 +474,9 @@ class Lexer:
         # adicionar EOF no final
         token_eof = Token(TokenKind.EOF, "", None, self.line, self.column)
 
-        temporario.append(token_eof)
+        tokens_encontrados.append(token_eof)
 
-        return iter(temporario)
+        return iter(tokens_encontrados)
 
     def scan(self) -> list[Token]:
         return list(self.tokens())
