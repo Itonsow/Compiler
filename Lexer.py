@@ -347,9 +347,11 @@ class Lexer:
             
                 
             elif character == '\\':
-            
+
                 prox = self.ver_proximo_caracter()
-                if prox == 'n':
+                if prox is None:
+                    raise LexerError("String nao terminada", linha_inicio, coluna_inicio)
+                elif prox == 'n':
                     value += '\n'
                     # self.avanco()
                     # self.avanco()
@@ -375,7 +377,7 @@ class Lexer:
 
 
     
-            elif character == '\n' :
+            elif character == '\n':
                 raise LexerError("Nao e permitido isso dentro de uma string", self.line, self.column)
             elif character == '"':
                 self.avanco()
@@ -408,8 +410,6 @@ class Lexer:
     #         if letra or caractere == "_":
 
     def tokens(self) -> Iterator[Token]:
-        tokens_encontrados = []
-
         while self.index < len(self.source):
             # pular espaços e comentarios
             self.id_pular()
@@ -429,18 +429,17 @@ class Lexer:
 
             # identificador ou palavra reservada
             if self.id_letra(caractere):
-                tokens_encontrados.append(self.identificador_reservada())
+                yield self.identificador_reservada()
                 continue
 
             # numero inteiro
             if self.id_numero(caractere):
-                tokens_encontrados.append(self.inteiros())
+                yield self.inteiros()
                 continue
 
             # string
             if caractere == '"':
-                token = self.string()
-                tokens_encontrados.append(token)
+                yield self.string()
                 continue
 
             # operador de dois caracteres
@@ -452,9 +451,7 @@ class Lexer:
                 self.avanco()
                 self.avanco()
 
-                token = Token(kind, dois_caracteres, None, linha_inicio, coluna_inicio)
-
-                tokens_encontrados.append(token)
+                yield Token(kind, dois_caracteres, None, linha_inicio, coluna_inicio)
                 continue
 
             # operador ou simbolo de um caractere
@@ -463,20 +460,15 @@ class Lexer:
 
                 self.avanco()
 
-                token = Token(kind, caractere, None, linha_inicio, coluna_inicio)
-
-                tokens_encontrados.append(token)
+                yield Token(kind, caractere, None, linha_inicio, coluna_inicio)
                 continue
 
             # se nao entrou em nenhum caso, o caractere eh invalido
             raise LexerError("Caractere invalido", linha_inicio, coluna_inicio)
 
         # adicionar EOF no final
-        token_eof = Token(TokenKind.EOF, "", None, self.line, self.column)
-
-        tokens_encontrados.append(token_eof)
-
-        return iter(tokens_encontrados)
+        yield Token(TokenKind.EOF, "", None, self.line, self.column)
+        # yield # mantém este método como gerador durante o desenvolvimento
 
     def scan(self) -> list[Token]:
         return list(self.tokens())
